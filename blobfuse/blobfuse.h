@@ -35,11 +35,6 @@
 #define AZS_PRINT 0
 #define UNREFERENCED_PARAMETER(p) (p)
 
-/* Define errors and return codes */
-#define D_NOTEXIST -1
-#define D_EMPTY 0
-#define D_NOTEMPTY 1
-
 // instruct gcrypt to use pthread
 GCRY_THREAD_OPTION_PTHREAD_IMPL;
 
@@ -122,7 +117,7 @@ extern int file_cache_timeout_in_seconds;
 
 // This is used to make all the calls to Storage
 // The C++ lite client does not store state, other than connection info, so we can use it between calls without issue.
-extern std::shared_ptr<blob_client_wrapper> azure_blob_client_wrapper;
+extern std::shared_ptr<attr_cache_client_wrapper> azure_blob_client_wrapper;
 
 // Used to map HTTP errors (ex. 404) to Linux errno (ex ENOENT)
 extern std::map<int, int> error_mapping;
@@ -354,11 +349,5 @@ int azs_rename_single_file(const char *src, const char *dst);
 /**
 * Convert a value into a string.
 */
-template<typename T>
-std::string to_str(const T& value) {
-   std::ostringstream out;
-   out << value;
-   return out.str();
-}
 
 #endif

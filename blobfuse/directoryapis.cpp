@@ -95,7 +95,7 @@ int azs_readdir(const char *path, void *buf, fuse_fill_dir_t filler, off_t, stru
     }
 
     errno = 0;
-    std::vector<list_blobs_hierarchical_item> listResults = list_all_blobs_hierarchical(str_options.containerName, "/", pathStr.substr(1));
+    std::vector<list_blobs_hierarchical_item> listResults = azure_blob_client_wrapper->list_all_blobs_hierarchical(str_options.containerName, "/", pathStr.substr(1));
     if (errno != 0)
     {
         if (AZS_PRINT)
@@ -138,7 +138,7 @@ int azs_readdir(const char *path, void *buf, fuse_fill_dir_t filler, off_t, stru
                     if ((prev_token_str.size() > 0) && (strcmp(prev_token_str.c_str(), directorySignifier.c_str()) != 0))
                     {
                         struct stat stbuf;
-                        stbuf.st_mode = S_IFREG | 0770; // Regular file (not a directory)
+                        stbuf.st_mode = S_IFREG | 0770; // Regular file (not a directory)   
                         stbuf.st_nlink = 1;
                         stbuf.st_size = listResults[i].content_length;
                         fillerResult = filler(buf, prev_token_str.c_str(), &stbuf, 0); // TODO: Add stat information.  Consider FUSE_FILL_DIR_PLUS.
@@ -197,7 +197,7 @@ int azs_rmdir(const char *path)
     remove(mntPath); // This will fail if the cache is not empty, which is fine, as in this case it will also fail later, after the server-side check.
 
     errno = 0;
-    int dirStatus = is_directory_empty(str_options.containerName, "/", pathStr.substr(1));
+    int dirStatus = azure_blob_client_wrapper->is_directory_empty(str_options.containerName, "/", pathStr.substr(1), directorySignifier.size());
     if (errno != 0)
     {
         return 0 - map_errno(errno);

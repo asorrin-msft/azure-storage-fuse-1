@@ -15,6 +15,7 @@
 #include "get_blob_request_base.h"
 #include "get_container_property_request_base.h"
 #include "list_blobs_request_base.h"
+#include "attr_cache.h"
 
 namespace microsoft_azure { namespace storage {
 
@@ -454,5 +455,197 @@ namespace microsoft_azure { namespace storage {
         unsigned int m_concurrency;
         bool m_valid;
     };
+/* Define errors and return codes */
+#define D_NOTEXIST -1
+#define D_EMPTY 0
+#define D_NOTEMPTY 1
+
+    class attr_cache_client_wrapper {
+    public:
+        /// <summary>
+        /// Constructs a blob client wrapper from a blob client instance.
+        /// </summary>
+        /// <param name="blobClient">A <see cref="microsoft_azure::storage::blob_client"> object stored in shared_ptr.</param>
+        explicit attr_cache_client_wrapper(std::shared_ptr<blob_client_wrapper> blob_client_wrapper, bool use_attr_cache, int attr_cache_timeout_in_seconds)
+            : m_blob_client_wrapper(blob_client_wrapper),
+            m_use_attr_cache(use_attr_cache),
+            m_attr_cache_timeout_in_seconds(attr_cache_timeout_in_seconds)
+        {
+        }
+
+        /// <summary>
+        /// Constructs a blob client wrapper from another blob client wrapper instance.
+        /// </summary>
+        /// <param name="other">A <see cref="microsoft_azure::storage::blob_client_wrapper"> object.</param>
+        attr_cache_client_wrapper(attr_cache_client_wrapper &&other)
+        {
+            m_blob_client_wrapper = other.m_blob_client_wrapper;
+            m_attr_cache = other.m_attr_cache;
+            m_attr_cache_timeout_in_seconds = other.m_attr_cache_timeout_in_seconds;
+            m_use_attr_cache = other.m_use_attr_cache;
+        }
+
+        attr_cache_client_wrapper& operator=(attr_cache_client_wrapper&& other)
+        {
+            m_blob_client_wrapper = other.m_blob_client_wrapper;
+            m_attr_cache = other.m_attr_cache;
+            m_attr_cache_timeout_in_seconds = other.m_attr_cache_timeout_in_seconds;
+            m_use_attr_cache = other.m_use_attr_cache;
+            return *this;
+        }
+
+        bool is_valid() const
+        {
+            return m_blob_client_wrapper->is_valid();
+        }
+
+        /* container level*/
+
+        /// <summary>
+        /// Creates a container.
+        /// </summary>
+        /// <param name="container">The container name.</param>
+        void create_container(const std::string &container)
+        {
+            m_blob_client_wrapper->create_container(container);
+        }
+
+        /// <summary>
+        /// Deletes a container.
+        /// </summary>
+        /// <param name="container">The container name.</param>
+        void delete_container(const std::string &container)
+        {
+            m_blob_client_wrapper->delete_container(container);
+        }
+
+        /// <summary>
+        /// Examines the existance of a container.
+        /// </summary>
+        /// <param name="container">The container name.</param>
+        /// <returns>Return true if the container does exist, otherwise, return false.</returns>
+        bool container_exists(const std::string &container)
+        {
+            return m_blob_client_wrapper->container_exists(container);
+        }
+
+        /// <summary>
+        /// List containers.
+        /// </summary>
+        /// <param name="prefix">The container name prefix.</param>
+        /// <param name="include_metadata">A bool value, return metadatas if it is true.</param>
+        std::vector<list_containers_item> list_containers(const std::string &prefix, bool include_metadata = false)
+        {
+            return m_blob_client_wrapper->list_containers(prefix, include_metadata);
+        }
+
+        /* blob level */
+
+        /// <summary>
+        /// List blobs in segments.
+        /// </summary>
+        /// <param name="container">The container name.</param>
+        /// <param name="delimiter">The delimiter used to designate the virtual directories.</param>
+        /// <param name="continuation_token">A continuation token returned by a previous listing operation.</param>
+        /// <param name="prefix">The blob name prefix.</param>
+        std::vector<list_blobs_hierarchical_item> list_all_blobs_hierarchical(const std::string &container, const std::string &delimiter, const std::string &prefix);
+
+        int is_directory_empty(std::string container, std::string delimiter, std::string prefix, int min_name_size);
+
+        /// <summary>
+        /// Uploads the contents of a blob from a local file, file size need to be equal or smaller than 64MB.
+        /// </summary>
+        /// <param name="sourcePath">The source file path.</param>
+        /// <param name="container">The container name.</param>
+        /// <param name="blob">The blob name.</param>
+        /// <param name="metadata">A <see cref="std::vector"> that respresents metadatas.</param>
+        void put_blob(const std::string &sourcePath, const std::string &container, const std::string blob, const std::vector<std::pair<std::string, std::string>> &metadata = std::vector<std::pair<std::string, std::string>>());
+
+        /// <summary>
+        /// Uploads the contents of a blob from a stream.
+        /// </summary>
+        /// <param name="container">The container name.</param>
+        /// <param name="blob">The blob name.</param>
+        /// <param name="is">The source stream.</param>
+        /// <param name="metadata">A <see cref="std::vector"> that respresents metadatas.</param>
+        void upload_block_blob_from_stream(const std::string &container, const std::string blob, std::istream &is, const std::vector<std::pair<std::string, std::string>> &metadata = std::vector<std::pair<std::string, std::string>>());
+
+        /// <summary>
+        /// Uploads the contents of a blob from a local file.
+        /// </summary>
+        /// <param name="sourcePath">The source file path.</param>
+        /// <param name="container">The container name.</param>
+        /// <param name="blob">The blob name.</param>
+        /// <param name="metadata">A <see cref="std::vector"> that respresents metadatas.</param>
+        /// <param name="parallel">A size_t value indicates the maximum parallelism can be used in this request.</param>
+        void upload_file_to_blob(const std::string &sourcePath, const std::string &container, const std::string blob, const std::vector<std::pair<std::string, std::string>> &metadata = std::vector<std::pair<std::string, std::string>>(), size_t parallel = 8);
+
+        /// <summary>
+        /// Downloads the contents of a blob to a stream.
+        /// </summary>
+        /// <param name="container">The container name.</param>
+        /// <param name="blob">The blob name.</param>
+        /// <param name="offset">The offset at which to begin downloading the blob, in bytes.</param>
+        /// <param name="size">The size of the data to download from the blob, in bytes.</param>
+        /// <param name="os">The target stream.</param>
+        void download_blob_to_stream(const std::string &container, const std::string &blob, unsigned long long offset, unsigned long long size, std::ostream &os);
+
+        /// <summary>
+        /// Downloads the contents of a blob to a local file.
+        /// </summary>
+        /// <param name="container">The container name.</param>
+        /// <param name="blob">The blob name.</param>
+        /// <param name="offset">The offset at which to begin downloading the blob, in bytes.</param>
+        /// <param name="size">The size of the data to download from the blob, in bytes.</param>
+        /// <param name="destPath">The target file path.</param>
+        /// <param name="parallel">A size_t value indicates the maximum parallelism can be used in this request.</param>
+        void download_blob_to_file(const std::string &container, const std::string &blob, const std::string &destPath, size_t parallel = 9);
+
+        /// <summary>
+        /// Gets the property of a blob.
+        /// </summary>
+        /// <param name="container">The container name.</param>
+        /// <param name="blob">The blob name.</param>
+        blob_property get_blob_property(const std::string &container, const std::string &blob);
+
+        /// <summary>
+        /// Examines the existance of a blob.
+        /// </summary>
+        /// <param name="container">The container name.</param>
+        /// <param name="blob">The blob name.</param>
+        /// <returns>Return true if the blob does exist, otherwise, return false.</returns>
+        bool blob_exists(const std::string &container, const std::string &blob);
+
+        /// <summary>
+        /// Deletes a blob.
+        /// </summary>
+        /// <param name="container">The container name.</param>
+        /// <param name="blob">The blob name.</param>
+        void delete_blob(const std::string &container, const std::string &blob);
+
+        /// <summary>
+        /// Copy a blob to another.
+        /// </summary>
+        /// <param name="sourceContainer">The source container name.</param>
+        /// <param name="sourceBlob">The source blob name.</param>
+        /// <param name="destContainer">The destination container name.</param>
+        /// <param name="destBlob">The destination blob name.</param>
+        void start_copy(const std::string &sourceContainer, const std::string &sourceBlob, const std::string &destContainer, const std::string &destBlob)
+        {
+            m_blob_client_wrapper->start_copy(sourceContainer, sourceBlob, destContainer, destBlob);
+        }
+    private:
+        attr_cache_client_wrapper () {}
+        std::shared_ptr<blob_client_wrapper> m_blob_client_wrapper;
+        attr_cache m_attr_cache;
+        bool m_use_attr_cache;
+        int m_attr_cache_timeout_in_seconds;
+    };
 
 } } // microsoft_azure::storage
+template<typename T>
+std::string to_str(const T& value) {
+   std::ostringstream out;
+   out << value;
+   return out.str();
+}

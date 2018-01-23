@@ -56,9 +56,9 @@ namespace microsoft_azure {
             // azure::storage::lease_status m_lease_status;
             // azure::storage::lease_state m_lease_state;
             // azure::storage::lease_duration m_lease_duration;
+            blob_property() {}
 
         private:
-            blob_property() {}
             bool m_valid;
         };
     }

@@ -178,7 +178,7 @@ int ensure_files_directory_exists_in_cache(const std::string file_path)
     return status;
 }
 
-std::vector<list_blobs_hierarchical_item> list_all_blobs_hierarchical(std::string container, std::string delimiter, std::string prefix)
+/*std::vector<list_blobs_hierarchical_item> list_all_blobs_hierarchical(std::string container, std::string delimiter, std::string prefix)
 {
     static const int maxFailCount = 20;
     std::vector<list_blobs_hierarchical_item> results;
@@ -233,6 +233,7 @@ std::vector<list_blobs_hierarchical_item> list_all_blobs_hierarchical(std::strin
     // errno will be set by list_blobs_hierarchial if the last call failed and we're out of retries.
     return results;
 }
+*/
 
 /*
  * Check if the direcotry is empty or not by checking if there is any blob with prefix exists in the specified container.
@@ -242,6 +243,7 @@ std::vector<list_blobs_hierarchical_item> list_all_blobs_hierarchical(std::strin
  *   - D_EMPTY is there's exactly one blob, and it's the ".directory" blob
  *   - D_NOTEMPTY otherwise (the directory exists and is not empty.)
  */
+ /*
 int is_directory_empty(std::string container, std::string delimiter, std::string prefix)
 {
     std::string continuation;
@@ -290,7 +292,7 @@ int is_directory_empty(std::string container, std::string delimiter, std::string
     }
     
     return dirBlobFound ? D_EMPTY : D_NOTEXIST;
-}
+}*/
 
 
 int azs_getattr(const char *path, struct stat *stbuf)
@@ -357,7 +359,7 @@ int azs_getattr(const char *path, struct stat *stbuf)
         blobNameStr.push_back('/');
 
         errno = 0;
-        int dirSize = is_directory_empty(str_options.containerName, "/", blobNameStr);
+        int dirSize = azure_blob_client_wrapper->is_directory_empty(str_options.containerName, "/", blobNameStr, directorySignifier.size());
 
         if (errno != 0)
         {
@@ -524,7 +526,7 @@ int azs_rename_directory(const char *src, const char *dst)
     closedir(dir_stream);
 
     errno = 0;
-    std::vector<list_blobs_hierarchical_item> listResults = list_all_blobs_hierarchical(str_options.containerName, "/", srcPathStr.substr(1));
+    std::vector<list_blobs_hierarchical_item> listResults = azure_blob_client_wrapper->list_all_blobs_hierarchical(str_options.containerName, "/", srcPathStr.substr(1));
     if (errno != 0)
     {
         if (AZS_PRINT)

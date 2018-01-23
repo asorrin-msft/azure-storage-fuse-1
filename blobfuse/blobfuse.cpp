@@ -36,7 +36,7 @@ const struct fuse_opt option_spec[] =
     FUSE_OPT_END
 };
 
-std::shared_ptr<blob_client_wrapper> azure_blob_client_wrapper;
+std::shared_ptr<attr_cache_client_wrapper> azure_blob_client_wrapper;
 class gc_cache gc_cache;
 
 // Currently, the cpp lite lib puts the HTTP status code in errno.
@@ -131,10 +131,10 @@ int read_config(std::string configFile)
     }
 }
 
-
 void *azs_init(struct fuse_conn_info * conn)
 {
-    azure_blob_client_wrapper = std::make_shared<blob_client_wrapper>(blob_client_wrapper::blob_client_wrapper_init(str_options.accountName, str_options.accountKey, 20, str_options.use_https));
+    std::shared_ptr<blob_client_wrapper> temp_azure_blob_client_wrapper = std::make_shared<blob_client_wrapper>(blob_client_wrapper::blob_client_wrapper_init(str_options.accountName, str_options.accountKey, 20, str_options.use_https));
+    azure_blob_client_wrapper = std::make_shared<attr_cache_client_wrapper>(attr_cache_client_wrapper(temp_azure_blob_client_wrapper, true, 120));
     if(errno != 0)
     {
         fprintf(stderr, "Creating blob client failed: errno = %d.\n", errno);

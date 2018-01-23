@@ -10,6 +10,7 @@ set(AZURE_STORAGE_HEADER
   azure-storage-cpp-lite/include/hash.h
   azure-storage-cpp-lite/include/retry.h
   azure-storage-cpp-lite/include/utility.h
+  azure-storage-cpp-lite/include/attr_cache.h
 
   azure-storage-cpp-lite/include/tinyxml2.h
   azure-storage-cpp-lite/include/xml_parser_base.h
@@ -74,6 +75,7 @@ set(AZURE_STORAGE_SOURCE
   azure-storage-cpp-lite/src/constants.cpp
   azure-storage-cpp-lite/src/hash.cpp
   azure-storage-cpp-lite/src/utility.cpp
+  azure-storage-cpp-lite/src/attr_cache.cpp
 
   azure-storage-cpp-lite/src/tinyxml2.cpp
   azure-storage-cpp-lite/src/tinyxml2_parser.cpp
@@ -103,6 +105,7 @@ set(AZURE_STORAGE_SOURCE
 
   azure-storage-cpp-lite/src/blob/blob_client.cpp
   azure-storage-cpp-lite/src/blob/blob_client_wrapper.cpp
+  azure-storage-cpp-lite/src/blob/attr_cache_client_wrapper.cpp
 )
 
 set (BLOBFUSE_HEADER
