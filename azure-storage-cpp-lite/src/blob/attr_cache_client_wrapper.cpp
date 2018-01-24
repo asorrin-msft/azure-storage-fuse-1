@@ -260,10 +260,14 @@ int is_service_directory_empty(std::string container, std::string delimiter, std
 
                 fprintf(stdout, "adding %s to attr_cache from get_blob_property operation\n", blob.c_str());
                 */
+                errno = 0
                 blob_property props = m_blob_client_wrapper->get_blob_property(container, blob);
-                attr_cache_entry entry(props, time(NULL), blob, false /* is_directory */);
-                std::shared_ptr<attr_cache_entry> entryptr = std::make_shared<attr_cache_entry>(entry);
-                m_attr_cache.add(blob, entryptr);
+                if (errno == 0)
+                {
+                    attr_cache_entry entry(props, time(NULL), blob, false /* is_directory */);
+                    std::shared_ptr<attr_cache_entry> entryptr = std::make_shared<attr_cache_entry>(entry);
+                    m_attr_cache.add(blob, entryptr);
+                }
 
                 return props;
             }
