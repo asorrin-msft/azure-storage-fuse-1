@@ -264,8 +264,8 @@ int is_service_directory_empty(std::string container, std::string delimiter, std
                 blob_property props = m_blob_client_wrapper->get_blob_property(container, blob);
                 if (errno == 0)
                 {
-                    attr_cache_entry entry(props, time(NULL), blob, false /* is_directory */);
-                    std::shared_ptr<attr_cache_entry> entryptr = std::make_shared<attr_cache_entry>(entry);
+//                    attr_cache_entry entry(props, time(NULL), blob, false /* is_directory */);
+                    std::shared_ptr<attr_cache_entry> entryptr = std::make_shared<attr_cache_entry>(props, time(NULL), blob, false /* is_directory */);
                     m_attr_cache.add(blob, entryptr);
                 }
 
@@ -327,8 +327,8 @@ int is_service_directory_empty(std::string container, std::string delimiter, std
                     properties.size = it->content_length;
                     properties.etag = it->etag;
                     properties.metadata = it->metadata;
-                    attr_cache_entry entry(properties, time(NULL), it->name, it->is_directory);
-                    std::shared_ptr<attr_cache_entry> entryptr = std::make_shared<attr_cache_entry>(entry);
+//                    attr_cache_entry entry(properties, time(NULL), it->name, it->is_directory);
+                    std::shared_ptr<attr_cache_entry> entryptr = std::make_shared<attr_cache_entry>(properties, time(NULL), it->name, it->is_directory);
                     attr_cache.add(it->name, entryptr);
                 }
             }
