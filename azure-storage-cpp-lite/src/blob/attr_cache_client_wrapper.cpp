@@ -260,7 +260,7 @@ int is_service_directory_empty(std::string container, std::string delimiter, std
 
                 fprintf(stdout, "adding %s to attr_cache from get_blob_property operation\n", blob.c_str());
                 */
-                errno = 0
+                errno = 0;
                 blob_property props = m_blob_client_wrapper->get_blob_property(container, blob);
                 if (errno == 0)
                 {
