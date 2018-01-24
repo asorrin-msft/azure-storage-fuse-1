@@ -36,7 +36,10 @@ namespace microsoft_azure {
             void add(const std::string &path, std::shared_ptr<attr_cache_entry> property);
             std::shared_ptr<attr_cache_entry> get(const std::string &path);
             void remove(const std::string &path);
-            std::vector<std::shared_ptr<attr_cache_entry>> list_under(const std::string &path);
+
+//            std::vector<std::shared_ptr<attr_cache_entry>> list_under(const std::string &prefix);
+//            void set_all_under_prefix(const std::string &prefix, std::vector<std::shared_ptr<attr_cache_entry>> properties);
+//            std::shared_ptr<attr_cache_entry> get_prefix_info(const std::string &prefix);
 
             attr_cache()
             {
@@ -45,7 +48,9 @@ namespace microsoft_azure {
 
         private:
             std::map<const std::string, std::shared_ptr<attr_cache_entry>> attr_map;
-            static std::mutex s_attr_cache_mutex;
+//            std::map<const std::string, std::shared_ptr<attr_cache_entry>> dir_map;
+            static std::mutex s_attr_map_mutex;
+//            static std::mutex s_dir_map_mutex;
         };
     }
 }

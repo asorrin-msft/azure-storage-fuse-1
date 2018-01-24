@@ -18,7 +18,7 @@ std::vector<list_blobs_hierarchical_item> list_all_blobs(std::string container, 
     int failcount = 0;
     do
     {
-        if (1)
+        if (0)
         {
             fprintf(stdout, "About to call list_blobs_hierarchial.  Container = %s, delimiter = %s, continuation = %s, prefix = %s\n", container.c_str(), delimiter.c_str(), continuation.c_str(), prefix.c_str());
         }
@@ -29,7 +29,7 @@ std::vector<list_blobs_hierarchical_item> list_all_blobs(std::string container, 
         {
             success = true;
             failcount = 0;
-            if (1)
+            if (0)
             {
                 fprintf(stdout, "results count = %s\n", to_str(response.blobs.size()).c_str());
                 fprintf(stdout, "next_marker = %s\n", response.next_marker.c_str());
@@ -136,6 +136,7 @@ int is_service_directory_empty(std::string container, std::string delimiter, std
             else
             {
                 // TODO:  actually use the return value from put_blob to store data in the cache
+                m_attr_cache.remove(blob);
                 m_blob_client_wrapper->put_blob(sourcePath, container, blob, metadata);
             }
         }
@@ -156,6 +157,7 @@ int is_service_directory_empty(std::string container, std::string delimiter, std
             else
             {
                 // TODO:  actually use the return value from put_blob to store data in the cache
+                m_attr_cache.remove(blob);
                 m_blob_client_wrapper->upload_block_blob_from_stream(container, blob, is, metadata);
             }
         }
@@ -177,6 +179,7 @@ int is_service_directory_empty(std::string container, std::string delimiter, std
             else
             {
                 // TODO:  actually use the return value from put_blob to store data in the cache
+                m_attr_cache.remove(blob);
                 m_blob_client_wrapper->upload_file_to_blob(sourcePath, container, blob, metadata, parallel);
             }
         }
@@ -240,7 +243,7 @@ int is_service_directory_empty(std::string container, std::string delimiter, std
             time_t curTime = time(NULL);
             if (blobEntry == nullptr || !(curTime - blobEntry->access_time < m_attr_cache_timeout_in_seconds))
             {
-                std::stringstream ss;
+/*                std::stringstream ss;
                 ss << curTime;
                 fprintf(stdout, "attr_cache null or timeout for %s get props, curtime = %s, timeout = %i", blob.c_str(), ss.str().c_str(), m_attr_cache_timeout_in_seconds);
                 if (blobEntry != nullptr)
@@ -256,6 +259,7 @@ int is_service_directory_empty(std::string container, std::string delimiter, std
                 }
 
                 fprintf(stdout, "adding %s to attr_cache from get_blob_property operation\n", blob.c_str());
+                */
                 blob_property props = m_blob_client_wrapper->get_blob_property(container, blob);
                 attr_cache_entry entry(props, time(NULL), blob, false /* is_directory */);
                 std::shared_ptr<attr_cache_entry> entryptr = std::make_shared<attr_cache_entry>(entry);
@@ -264,7 +268,7 @@ int is_service_directory_empty(std::string container, std::string delimiter, std
                 return props;
             }
 
-            fprintf(stdout, "%s props found in attr_cache\n", blob.c_str());
+//            fprintf(stdout, "%s props found in attr_cache\n", blob.c_str());
             return blobEntry->properties;
         }
 
@@ -312,14 +316,17 @@ int is_service_directory_empty(std::string container, std::string delimiter, std
         {
             for (auto it = items.begin(); it != items.end(); it++)
             {
-                fprintf(stdout, "adding %s to attr_cache from list operation\n", it->name.c_str());
-                blob_property properties;
-                properties.size = it->content_length;
-                properties.etag = it->etag;
-                properties.metadata = it->metadata;
-                attr_cache_entry entry(properties, time(NULL), it->name, it->is_directory);
-                std::shared_ptr<attr_cache_entry> entryptr = std::make_shared<attr_cache_entry>(entry);
-                attr_cache.add(it->name, entryptr);
+                if (!it->is_directory)
+                {
+//                    fprintf(stdout, "adding %s to attr_cache from list operation\n", it->name.c_str());
+                    blob_property properties;
+                    properties.size = it->content_length;
+                    properties.etag = it->etag;
+                    properties.metadata = it->metadata;
+                    attr_cache_entry entry(properties, time(NULL), it->name, it->is_directory);
+                    std::shared_ptr<attr_cache_entry> entryptr = std::make_shared<attr_cache_entry>(entry);
+                    attr_cache.add(it->name, entryptr);
+                }
             }
             return items;
         }
@@ -336,10 +343,12 @@ int is_service_directory_empty(std::string container, std::string delimiter, std
 //            fprintf(stdout, "list called\n");
             if (!m_use_attr_cache)
             {
-                fprintf(stdout, "attr_cache_disabled\n");
+//                fprintf(stdout, "attr_cache_disabled\n");
                 return list_all_blobs(container, delimiter, prefix, m_blob_client_wrapper);
             }
+            return add_to_attr_cache(list_all_blobs(container, delimiter, prefix, m_blob_client_wrapper), m_attr_cache);
 
+/*
             std::string dirstring = prefix + ".directory";
             fprintf(stdout, "checking %s for listing operation in cache\n", dirstring.c_str());
             std::shared_ptr<attr_cache_entry> dirEntry = m_attr_cache.get(dirstring);
@@ -387,6 +396,7 @@ int is_service_directory_empty(std::string container, std::string delimiter, std
                 results.push_back(result);
             }
             return results;
+            */
 
         }
 
