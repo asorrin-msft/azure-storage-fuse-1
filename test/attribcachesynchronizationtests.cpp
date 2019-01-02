@@ -29,7 +29,7 @@ public:
 //      - On two blobs in different directories.
 // The first operation that runs contains a small delay; the second one does not.  If the operations should be serialized, the first must finish first; otherwise the second should finish first.
 // Parameterized testing is used to test each pair of operations in a separate test.
-class AttribCacheSerializationTest : public ::testing::TestWithParam<std::tuple<std::string, std::string, int>> {
+class AttribCacheSynchronizationTest : public ::testing::TestWithParam<std::tuple<std::string, std::string, int>> {
 public:
     void prep_mock(std::shared_ptr<std::mutex> m, std::shared_ptr<std::condition_variable> cv, std::shared_ptr<int> calls, std::shared_ptr<bool> sleep_finished);
 
@@ -71,7 +71,7 @@ void prep(std::shared_ptr<std::mutex> m, std::shared_ptr<std::condition_variable
 }
 
 // Sets up a default action on every potential mocked method.
-void AttribCacheSerializationTest::prep_mock(std::shared_ptr<std::mutex> m, std::shared_ptr<std::condition_variable> cv, std::shared_ptr<int> calls, std::shared_ptr<bool> sleep_finished)
+void AttribCacheSynchronizationTest::prep_mock(std::shared_ptr<std::mutex> m, std::shared_ptr<std::condition_variable> cv, std::shared_ptr<int> calls, std::shared_ptr<bool> sleep_finished)
 {
     ON_CALL(*mockClient, get_blob_property(_, _))
     .WillByDefault(::testing::InvokeWithoutArgs([=] ()
@@ -228,7 +228,7 @@ bool expect_synchronization(std::string first_operation, std::string second_oper
     }
 }
 
-TEST_P(AttribCacheSerializationTest, Run)
+TEST_P(AttribCacheSynchronizationTest, Run)
 {
     std::string firstOperation = std::get<0>(GetParam());
     std::string secondOperation = std::get<1>(GetParam());
@@ -323,4 +323,4 @@ std::string getTestName(::testing::TestParamInfo<std::tuple<std::string, std::st
     return ret + std::get<0>(info.param) + "Then" + std::get<1>(info.param) + scenario;
 }
 
-INSTANTIATE_TEST_CASE_P(TmpName, AttribCacheSerializationTest, ::testing::Combine(::testing::ValuesIn(getKeys()), ::testing::ValuesIn(getKeys()), ::testing::Values(0, 1, 2)), getTestName);
+INSTANTIATE_TEST_CASE_P(AttribCacheTests, AttribCacheSynchronizationTest, ::testing::Combine(::testing::ValuesIn(getKeys()), ::testing::ValuesIn(getKeys()), ::testing::Values(0, 1, 2)), getTestName);

@@ -548,7 +548,7 @@ std::string getTestName(::testing::TestParamInfo<std::string> info)
     return info.param;
 }
 
-INSTANTIATE_TEST_CASE_P(TmpName, AttribCacheInvalidateCacheTest, ::testing::ValuesIn(getKeys2()), getTestName);
+INSTANTIATE_TEST_CASE_P(AttribCacheTests, AttribCacheInvalidateCacheTest, ::testing::ValuesIn(getKeys2()), getTestName);
 
 // TODO: move main() into a separate file; it should exist only once for the 'blobfusetests' application.
 int main(int argc, char** argv) {
